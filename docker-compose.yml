@@ -1,56 +1,65 @@
-version: '3.8'
+version: '3.9'
 
 services:
   backend:
     build:
       context: .
       dockerfile: Dockerfile.backend
-    ports:
-      - "3000:3000"
     environment:
-      - NODE_ENV=production
-      - PORT=3000
-      - HOST=0.0.0.0
-      - DATABASE_URL=${DATABASE_URL}
-      - DIRECT_URL=${DIRECT_URL}
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_API_KEY=${SUPABASE_API_KEY}
-      - NUTRITION_AI_PROVIDER=${NUTRITION_AI_PROVIDER}
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - GEMINI_MODEL=${GEMINI_MODEL}
-      - GROQ_API_KEY=${GROQ_API_KEY}
-      - GROQ_MODEL=${GROQ_MODEL}
-      - LLM_PROVIDER=${LLM_PROVIDER}
-      - LLM_TIMEOUT_MS=${LLM_TIMEOUT_MS}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - OPENAI_MODEL=${OPENAI_MODEL}
-    depends_on:
-      - db
+      NODE_ENV: production
+      PORT: 3000
+      HOST: 0.0.0.0
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+      DATABASE_URL: ${DATABASE_URL}
+      DIRECT_URL: ${DIRECT_URL}
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      SUPABASE_STORAGE_BUCKET: ${SUPABASE_STORAGE_BUCKET:-nutrition-images}
+      APPS_MCP_API_KEY: ${APPS_MCP_API_KEY}
+      NUTRITION_AI_PROVIDER: ${NUTRITION_AI_PROVIDER:-gemini}
+      LLM_PROVIDER: ${LLM_PROVIDER:-openai}
+      LLM_TIMEOUT_MS: ${LLM_TIMEOUT_MS:-15000}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4.1-mini}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.0-flash}
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      GROQ_MODEL: ${GROQ_MODEL:-llama-3.3-70b-versatile}
     restart: unless-stopped
 
   web:
     build:
       context: .
       dockerfile: Dockerfile.web
-    ports:
-      - "3001:3000"
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
     environment:
-      - NODE_ENV=production
-    restart: unless-stopped
+      NODE_ENV: production
+      STEADY_API_BASE_URL: http://backend:3000
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
     depends_on:
       - backend
+    restart: unless-stopped
 
-  db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-steady_ai}
+  caddy:
+    image: caddy:2.8-alpine
+    depends_on:
+      - web
+      - backend
     ports:
-      - "5432:5432"
+      - '80:80'
+      - '443:443'
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL}
+      APP_DOMAIN: ${APP_DOMAIN}
+      API_DOMAIN: ${API_DOMAIN}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
     restart: unless-stopped
 
 volumes:
-  postgres_data:
+  caddy_data:
+  caddy_config:

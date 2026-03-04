@@ -1,4 +1,5 @@
 node_modules
+web/node_modules
 npm-debug.log
 dist
 build
@@ -8,6 +9,7 @@ build
 .env.local
 .env.*.local
 .next
+web/.next
 .gradle
 android/build
 *.apk
