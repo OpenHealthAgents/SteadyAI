@@ -19,7 +19,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.steadyai.app.agents.AgentInteractionScreen
-import com.steadyai.app.apikeys.ApiKeyManagementScreen
 import com.steadyai.app.checkin.CheckInScreen
 import com.steadyai.app.community.CommunityScreen
 import com.steadyai.app.health.HealthConnectRoute
@@ -31,7 +30,6 @@ enum class MainTab(
     val label: String
 ) {
     HOME("tab_home", "Home"),
-    API_KEYS("tab_api_keys", "Keys"),
     AGENTS("tab_agents", "Agents"),
     COMMUNITY("tab_community", "Community"),
     CHECK_IN("tab_check_in", "Check-in"),
@@ -75,9 +73,6 @@ fun MainShellScreen() {
         ) {
             composable(MainTab.HOME.route) {
                 HomeScreen()
-            }
-            composable(MainTab.API_KEYS.route) {
-                ApiKeyManagementScreen()
             }
             composable(MainTab.AGENTS.route) {
                 AgentInteractionScreen()

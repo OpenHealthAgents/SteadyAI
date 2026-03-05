@@ -2,13 +2,22 @@
 
 import { useState } from 'react';
 import { requestAgentReply } from './api';
-import { AGENT_DISCLAIMER, STARTER_PROMPTS } from './data';
+import { AGENT_DISCLAIMER, STARTER_PROMPT_GROUPS, STARTER_PROMPTS } from './data';
 import type { ChatMessage } from './types';
 
-export function AgentInteractionPanel() {
+interface AgentInteractionPanelProps {
+  embedded?: boolean;
+}
+
+export function AgentInteractionPanel({ embedded = false }: AgentInteractionPanelProps) {
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [activePromptGroup, setActivePromptGroup] = useState<(typeof STARTER_PROMPT_GROUPS)[number]['id']>(
+    STARTER_PROMPT_GROUPS[0].id
+  );
   const [messages, setMessages] = useState<ChatMessage[]>([welcomeMessage()]);
+
+  const visibleGroup = STARTER_PROMPT_GROUPS.find((group) => group.id === activePromptGroup) || STARTER_PROMPT_GROUPS[0];
 
   async function sendPrompt(promptText: string): Promise<void> {
     const prompt = promptText.trim();
@@ -60,7 +69,7 @@ export function AgentInteractionPanel() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-4xl flex-col gap-4 p-6">
+    <section className={`mx-auto flex w-full flex-col gap-4 ${embedded ? '' : 'min-h-screen max-w-4xl p-6'}`}>
       <header className="space-y-2">
         <h1 className="text-2xl font-semibold">Assistant Hub</h1>
         <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900" role="note" aria-live="polite">
@@ -69,9 +78,43 @@ export function AgentInteractionPanel() {
       </header>
 
       <section aria-label="Starter prompts" className="rounded-xl border border-gray-200 bg-white p-3">
-        <p className="mb-2 text-sm font-medium text-gray-900">Try one:</p>
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <p className="text-sm font-medium text-gray-900">Starter prompts</p>
+          <button
+            type="button"
+            className="rounded-md border border-gray-300 bg-gray-50 px-2 py-1 text-xs text-gray-700 hover:bg-gray-100"
+            onClick={() => {
+              const randomPrompt = STARTER_PROMPTS[Math.floor(Math.random() * STARTER_PROMPTS.length)];
+              if (randomPrompt) {
+                void sendPrompt(randomPrompt);
+              }
+            }}
+          >
+            Surprise me
+          </button>
+        </div>
+
+        <div className="mb-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          {STARTER_PROMPT_GROUPS.map((group) => {
+            const isActive = group.id === activePromptGroup;
+            return (
+              <button
+                key={group.id}
+                type="button"
+                onClick={() => setActivePromptGroup(group.id)}
+                className={`rounded-lg border p-2 text-left ${
+                  isActive ? 'border-black bg-black text-white' : 'border-gray-300 bg-white text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                <p className="text-xs font-semibold">{group.label}</p>
+                <p className={`mt-1 text-[11px] ${isActive ? 'text-gray-200' : 'text-gray-500'}`}>{group.description}</p>
+              </button>
+            );
+          })}
+        </div>
+
         <div className="flex flex-wrap gap-2">
-          {STARTER_PROMPTS.map((prompt) => (
+          {visibleGroup.prompts.map((prompt) => (
             <button
               key={prompt}
               type="button"
@@ -87,7 +130,7 @@ export function AgentInteractionPanel() {
       </section>
 
       <section className="flex-1 overflow-hidden rounded-xl border border-gray-200 bg-white" aria-label="Assistant conversation">
-        <ul className="max-h-[55vh] space-y-3 overflow-y-auto p-4" role="log" aria-live="polite" aria-relevant="additions text">
+        <ul className={`${embedded ? 'max-h-[40vh]' : 'max-h-[55vh]'} space-y-3 overflow-y-auto p-4`} role="log" aria-live="polite" aria-relevant="additions text">
           {messages.map((message) => {
             const isUser = message.role === 'user';
             return (
@@ -162,7 +205,7 @@ export function AgentInteractionPanel() {
           </button>
         </div>
       </section>
-    </main>
+    </section>
   );
 }
 
@@ -170,7 +213,7 @@ function welcomeMessage(): ChatMessage {
   return {
     id: 'system-assistant-hub',
     role: 'system',
-    text: 'Assistant Hub is ready. One conversation can route to meal planning, habit coaching, community guidance, or educator clarification.',
+    text: 'Assistant Hub is ready. Pick a starter prompt to quickly route to meal planning, habit coaching, community guidance, or myth clarification.',
     createdAt: new Date().toISOString()
   };
 }

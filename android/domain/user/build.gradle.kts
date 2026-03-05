@@ -24,4 +24,8 @@ android {
 dependencies {
     implementation(project(":core:model"))
     implementation(libs.javax.inject)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.coroutines.test)
 }
