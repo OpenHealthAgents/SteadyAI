@@ -303,7 +303,7 @@ const TOOLS: ToolDescriptor[] = [
     name: 'steadyai.nutrition_coach',
     title: 'Nutrition Coach',
     description:
-      'Analyze a meal text/image context and return an interactive macro breakdown with quick adjustment suggestions.',
+      'Analyze a meal and return the interactive calorie and macro tracker card with quick adjustment and logging actions.',
     inputSchema: {
       type: 'object',
       additionalProperties: false,
@@ -328,7 +328,7 @@ const TOOLS: ToolDescriptor[] = [
   {
     name: 'steadyai.log_nutrition_intake',
     title: 'Log Nutrition Intake',
-    description: 'Log a nutrition entry for the current user and return updated today totals.',
+    description: 'Log a nutrition entry for the current user and return the updated interactive calorie tracker card.',
     inputSchema: {
       type: 'object',
       additionalProperties: false,
@@ -340,6 +340,11 @@ const TOOLS: ToolDescriptor[] = [
       }
     },
     _meta: {
+      ui: {
+        resourceUri: NUTRITION_WIDGET_TEMPLATE_URI,
+        visibility: ['model', 'app']
+      },
+      'openai/outputTemplate': NUTRITION_WIDGET_TEMPLATE_URI,
       'openai/widgetAccessible': true,
       'openai/toolInvocation/invoking': 'Logging nutrition...',
       'openai/toolInvocation/invoked': 'Nutrition logged'
@@ -2681,6 +2686,7 @@ async function handleToolCall(
     return {
       text: `Meal logged. Today: ${Math.round(todaySummary.calories)} kcal across ${todaySummary.entries} entr${todaySummary.entries === 1 ? 'y' : 'ies'}.`,
       data: {
+        mealText,
         entryId: entry.id,
         consumedAt: entry.consumedAt,
         totals: {
@@ -2691,6 +2697,13 @@ async function handleToolCall(
         },
         todaySummary,
         userId: resolvedUser.userId
+      },
+      meta: {
+        'openai/outputTemplate': NUTRITION_WIDGET_TEMPLATE_URI,
+        ui: {
+          resourceUri: NUTRITION_WIDGET_TEMPLATE_URI
+        },
+        generatedAt: new Date().toISOString()
       }
     };
   }
