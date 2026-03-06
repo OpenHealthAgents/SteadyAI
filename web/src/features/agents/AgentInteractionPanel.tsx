@@ -78,7 +78,7 @@ export function AgentInteractionPanel({ embedded = false, onIntentDetected }: Ag
       <header className="space-y-3">
         <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-[#7a4b28]">
           <span className="rounded-full bg-[#f5ddc7] px-3 py-1">Coach Mode</span>
-          <span>Intent-led guidance</span>
+          <span>Simple guided flow</span>
         </div>
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold text-[#1d140d]">Conversational fitness and nutrition coach</h1>
@@ -191,7 +191,7 @@ export function AgentInteractionPanel({ embedded = false, onIntentDetected }: Ag
                 </div>
                 {!isUser && message.routedIntent && message.routedIntent !== 'GENERAL' ? (
                   <p className="max-w-[92%] text-[11px] uppercase tracking-[0.18em] text-[#8b7868]">
-                    Detected intent: {message.routedIntent}
+                    Suggested area: {message.routedIntent}
                   </p>
                 ) : null}
                 {message.cards?.length ? (

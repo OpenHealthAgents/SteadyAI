@@ -95,7 +95,18 @@ const DEFAULT_CONSENTS: DeviceConsentState = {
 };
 
 export default function HomePage() {
-  const { isHydrated, isAuthenticated, token, userId } = useAuth();
+  const {
+    isHydrated,
+    isAuthenticated,
+    isGoogleAuthConfigured,
+    isAppleAuthConfigured,
+    isSigningInWithGoogle,
+    isSigningInWithApple,
+    signInWithGoogle,
+    signInWithApple,
+    token,
+    userId
+  } = useAuth();
   const [focusArea, setFocusArea] = useState<FocusArea>('coach');
   const [isCreatePostOpen, setCreatePostOpen] = useState(false);
   const [reportDays, setReportDays] = useState<number>(7);
@@ -482,7 +493,7 @@ export default function HomePage() {
               Conversational coaching that can plan, track, report, connect your phone, and keep your community moving.
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-[#5f5145]">
-              The assistant is the front door. User intent decides whether the next best screen is a workout, nutrition log,
+              The assistant is the front door. What a user asks for decides whether the next step is a workout, nutrition log,
               sync flow, report, community action, or store offer.
             </p>
 
@@ -509,18 +520,47 @@ export default function HomePage() {
                 <p className="text-sm text-[#7a4b28]">
                   Onboarding is required before Steady AI can store workouts, nutrition, reports, or health summaries.
                 </p>
-                <Link
-                  href="/onboarding"
-                  className="mt-4 inline-flex rounded-full bg-[#1d140d] px-5 py-3 text-sm font-medium text-white"
-                >
-                  Start onboarding
-                </Link>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  {isGoogleAuthConfigured ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void signInWithGoogle({ redirectTo: '/onboarding' });
+                      }}
+                      disabled={isSigningInWithGoogle || isSigningInWithApple}
+                      className="inline-flex rounded-full bg-[#1d140d] px-5 py-3 text-sm font-medium text-white disabled:bg-[#ab9a8c]"
+                    >
+                      {isSigningInWithGoogle ? 'Connecting Google...' : 'Continue with Google'}
+                    </button>
+                  ) : null}
+                  {isAppleAuthConfigured ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void signInWithApple({ redirectTo: '/onboarding' });
+                      }}
+                      disabled={isSigningInWithGoogle || isSigningInWithApple}
+                      className="inline-flex rounded-full border border-[#1d140d] bg-white px-5 py-3 text-sm font-medium text-[#1d140d] disabled:border-[#cab8a8] disabled:text-[#ab9a8c]"
+                    >
+                      {isSigningInWithApple ? 'Connecting Apple...' : 'Continue with Apple'}
+                    </button>
+                  ) : null}
+                  <Link
+                    href="/onboarding"
+                    className="inline-flex rounded-full border border-[#d6b28d] px-5 py-3 text-sm font-medium text-[#7a4b28]"
+                  >
+                    {isGoogleAuthConfigured || isAppleAuthConfigured ? 'Or continue onboarding' : 'Start onboarding'}
+                  </Link>
+                </div>
               </div>
             ) : null}
           </div>
 
           <aside className="rounded-[36px] border border-[#e8d7c6] bg-[#1d140d] p-6 text-white shadow-[0_30px_120px_rgba(29,20,13,0.24)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#d8c0ad]">Intent router</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#d8c0ad]">Choose your focus</p>
+            <p className="mt-3 text-sm leading-6 text-[#d8c0ad]">
+              Jump straight into the area you want help with, or ask the coach and let Steady AI take you there.
+            </p>
             <div className="mt-4 space-y-4">
               {FOCUS_AREAS.map((area) => {
                 const active = area.key === focusArea;
