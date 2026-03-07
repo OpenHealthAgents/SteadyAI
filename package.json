@@ -20,12 +20,12 @@
     "@fastify/multipart": "^9.0.3",
     "@prisma/client": "6.19.2",
     "dotenv": "^16.4.5",
-    "fastify": "^5.2.1"
+    "fastify": "^5.2.1",
+    "prisma": "6.19.2",
+    "tsx": "^4.19.2"
   },
   "devDependencies": {
     "@types/node": "^22.13.5",
-    "prisma": "6.19.2",
-    "tsx": "^4.19.2",
     "typescript": "^5.7.3"
   }
 }
