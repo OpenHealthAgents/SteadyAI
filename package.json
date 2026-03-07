@@ -4,7 +4,7 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "postinstall": "prisma generate",
+    "postinstall": "sh -c 'if [ -f prisma/schema.prisma ]; then prisma generate; else echo \"Skipping prisma generate: prisma/schema.prisma not found\"; fi'",
     "dev": "tsx watch src/server.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
