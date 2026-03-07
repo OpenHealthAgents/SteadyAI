@@ -3,9 +3,9 @@
 import { useAuth } from '@/auth';
 import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 
-export default function AuthCallbackPage() {
+function AuthCallbackPageContent() {
   const { login } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -80,5 +80,25 @@ export default function AuthCallbackPage() {
         </p>
       </div>
     </main>
+  );
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="mx-auto flex min-h-screen max-w-xl flex-col items-center justify-center gap-4 px-6 text-center">
+          <div className="rounded-[28px] border border-[#ead9ca] bg-white/80 p-8 shadow-[0_24px_80px_rgba(80,48,24,0.08)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#7a4b28]">Google Sign-In</p>
+            <h1 className="mt-3 text-2xl font-semibold text-[#1d140d]">Finishing authentication</h1>
+            <p className="mt-3 text-sm text-[#5f5145]">
+              Steady AI is completing your Google sign-in and restoring your session.
+            </p>
+          </div>
+        </main>
+      }
+    >
+      <AuthCallbackPageContent />
+    </Suspense>
   );
 }
