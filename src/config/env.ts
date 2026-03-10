@@ -25,6 +25,7 @@ interface AppEnv {
   GROQ_MODEL: string;
   APPS_MCP_API_KEY: string;
   PUBLIC_BASE_URL: string;
+  OPENAI_APPS_CHALLENGE_TOKEN: string;
 }
 
 function getNodeEnv(value: string | undefined): NodeEnv {
