@@ -72,4 +72,5 @@ export const env: AppEnv = {
   GROQ_MODEL: process.env.GROQ_MODEL ?? 'llama-3.3-70b-versatile',
   APPS_MCP_API_KEY: process.env.APPS_MCP_API_KEY ?? '',
   PUBLIC_BASE_URL: process.env.PUBLIC_BASE_URL ?? ''
+  OPENAI_APPS_CHALLENGE_TOKEN: process.env.OPENAI_APPS_CHALLENGE_TOKEN ?? ''
 };
