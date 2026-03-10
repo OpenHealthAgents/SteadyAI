@@ -3442,20 +3442,6 @@ export async function appsMcpRoutes(fastify: FastifyInstance): Promise<void> {
   };
 
   const mcpPostHandler = async (request: FastifyRequest<{ Body: JsonRpcRequest }>, reply: FastifyReply) => {
-    if (!ensureMcpRequestAuthorized(request, reply)) {
-      return;
-    }
-    let authContext: McpAuthContext;
-    try {
-      authContext = await resolveMcpAuthContext(request);
-    } catch {
-      if (hasSupabaseOAuthSupport()) {
-        sendOAuthChallenge(reply);
-        return;
-      }
-      return reply.status(401).send({ error: 'Unauthorized' });
-    }
-
     const body = request.body ?? {};
     const id = body.id ?? null;
 
@@ -3484,6 +3470,21 @@ export async function appsMcpRoutes(fastify: FastifyInstance): Promise<void> {
       if (body.method === 'resources/list') {
         sendJsonRpcResult(reply, id, { resources: WIDGET_RESOURCES });
         return;
+      }
+
+      if (!ensureMcpRequestAuthorized(request, reply)) {
+        return;
+      }
+
+      let authContext: McpAuthContext;
+      try {
+        authContext = await resolveMcpAuthContext(request);
+      } catch {
+        if (hasSupabaseOAuthSupport()) {
+          sendOAuthChallenge(reply);
+          return;
+        }
+        return reply.status(401).send({ error: 'Unauthorized' });
       }
 
       if (body.method === 'resources/read') {
