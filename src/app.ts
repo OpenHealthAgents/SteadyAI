@@ -33,7 +33,16 @@ export async function buildApp(): Promise<FastifyInstance> {
   app.get('/', async () => {
     return { status: 'ok', message: 'SteadyAI Backend is running' };
   });
+ 
+  app.get('/.well-known/openai-apps-challenge', async (request, reply) => {
+    if (!env.OPENAI_APPS_CHALLENGE_TOKEN.trim()) {
+      return reply.status(404).send({ error: 'Challenge token not configured' });
+    }
 
+    reply.type('text/plain; charset=utf-8');
+    return reply.status(200).send(env.OPENAI_APPS_CHALLENGE_TOKEN.trim());
+  });
+  
   await app.register(appsMcpRoutes);
   await app.register(registerRoutes, { prefix: '/api' });
 
