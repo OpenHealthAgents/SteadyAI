@@ -33,6 +33,11 @@ interface ToolDescriptor {
   title?: string;
   description: string;
   inputSchema: Record<string, unknown>;
+  annotations?: {
+    readOnlyHint?: boolean;
+    openWorldHint?: boolean;
+    destructiveHint?: boolean;
+  };
   _meta?: Record<string, unknown>;
 }
 
@@ -195,6 +200,11 @@ const TOOLS: ToolDescriptor[] = [
         purchaseHistory: { type: 'object' }
       }
     },
+    annotations: {
+      readOnlyHint: true,
+      openWorldHint: false,
+      destructiveHint: false
+    },
     _meta: {
       ui: {
         resourceUri: SUMMARY_WIDGET_TEMPLATE_URI,
@@ -219,6 +229,11 @@ const TOOLS: ToolDescriptor[] = [
         agentType: { type: 'string', enum: ['MEAL_PLANNER', 'HABIT_COACH', 'COMMUNITY_GUIDE'] },
         prompt: { type: 'string', minLength: 1 }
       }
+    },
+    annotations: {
+      readOnlyHint: true,
+      openWorldHint: true,
+      destructiveHint: false
     },
     _meta: {
       ui: {
@@ -257,6 +272,11 @@ const TOOLS: ToolDescriptor[] = [
         communityPostText: { type: 'string' }
       }
     },
+    annotations: {
+      readOnlyHint: true,
+      openWorldHint: true,
+      destructiveHint: false
+    },
     _meta: {
       ui: {
         resourceUri: EDUCATOR_WIDGET_TEMPLATE_URI,
@@ -282,6 +302,11 @@ const TOOLS: ToolDescriptor[] = [
         userId: { type: 'string' },
         currentPlan: { type: 'object' }
       }
+    },
+    annotations: {
+      readOnlyHint: true,
+      openWorldHint: false,
+      destructiveHint: false
     },
     _meta: {
       ui: {
@@ -314,6 +339,11 @@ const TOOLS: ToolDescriptor[] = [
         feedback: { type: 'string', enum: ['TOO_EASY', 'JUST_RIGHT', 'TOO_HARD'] }
       }
     },
+    annotations: {
+      readOnlyHint: false,
+      openWorldHint: false,
+      destructiveHint: false
+    },
     _meta: {
       'openai/toolInvocation/invoking': 'Saving workout session...',
       'openai/toolInvocation/invoked': 'Workout session saved'
@@ -330,6 +360,11 @@ const TOOLS: ToolDescriptor[] = [
       properties: {
         userId: { type: 'string' }
       }
+    },
+    annotations: {
+      readOnlyHint: true,
+      openWorldHint: false,
+      destructiveHint: false
     },
     _meta: {
       'openai/toolInvocation/invoking': 'Resolving user context...',
@@ -352,6 +387,11 @@ const TOOLS: ToolDescriptor[] = [
         weeklyInsight: { type: 'object' }
       }
     },
+    annotations: {
+      readOnlyHint: true,
+      openWorldHint: false,
+      destructiveHint: false
+    },
     _meta: {
       'openai/toolInvocation/invoking': 'Generating check-in draft...',
       'openai/toolInvocation/invoked': 'Check-in draft ready'
@@ -369,6 +409,11 @@ const TOOLS: ToolDescriptor[] = [
         userId: { type: 'string' },
         content: { type: 'string', minLength: 1 }
       }
+    },
+    annotations: {
+      readOnlyHint: false,
+      openWorldHint: false,
+      destructiveHint: false
     },
     _meta: {
       'openai/toolInvocation/invoking': 'Publishing CHECK_IN post...',
@@ -390,6 +435,11 @@ const TOOLS: ToolDescriptor[] = [
         autoPostCheckIn: { type: 'boolean' }
       }
     },
+    annotations: {
+      readOnlyHint: false,
+      openWorldHint: false,
+      destructiveHint: false
+    },
     _meta: {
       'openai/toolInvocation/invoking': 'Saving workout preferences...',
       'openai/toolInvocation/invoked': 'Workout preferences saved'
@@ -409,6 +459,11 @@ const TOOLS: ToolDescriptor[] = [
         mealText: { type: 'string', minLength: 1 },
         action: { type: 'string', enum: ['DEFAULT', 'LIGHTER', 'HIGH_PROTEIN', 'BALANCED', 'SWAP_CARB'] }
       }
+    },
+    annotations: {
+      readOnlyHint: true,
+      openWorldHint: true,
+      destructiveHint: false
     },
     _meta: {
       ui: {
@@ -434,6 +489,11 @@ const TOOLS: ToolDescriptor[] = [
         mealText: { type: 'string', minLength: 1 },
         consumedAt: { type: 'string' }
       }
+    },
+    annotations: {
+      readOnlyHint: false,
+      openWorldHint: true,
+      destructiveHint: false
     },
     _meta: {
       ui: {
