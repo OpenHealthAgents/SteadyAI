@@ -26,6 +26,7 @@ export function AppTopNav() {
     isAuthenticated,
     isGoogleAuthConfigured,
     isAppleAuthConfigured,
+    isPasswordAuthConfigured,
     isSigningInWithGoogle,
     isSigningInWithApple,
     signInWithGoogle,
@@ -78,8 +79,13 @@ export function AppTopNav() {
             >
               Sign out
             </button>
-          ) : isGoogleAuthConfigured || isAppleAuthConfigured ? (
+          ) : isGoogleAuthConfigured || isAppleAuthConfigured || isPasswordAuthConfigured ? (
             <div className="flex items-center gap-2">
+              {isPasswordAuthConfigured ? (
+                <Link href="/sign-in" className="rounded-full bg-[#1d140d] px-4 py-2 text-sm text-white">
+                  Email
+                </Link>
+              ) : null}
               {isGoogleAuthConfigured ? (
                 <button
                   type="button"
@@ -139,8 +145,17 @@ export function AppTopNav() {
               >
                 Sign out
               </button>
-            ) : isGoogleAuthConfigured || isAppleAuthConfigured ? (
+            ) : isGoogleAuthConfigured || isAppleAuthConfigured || isPasswordAuthConfigured ? (
               <>
+                {isPasswordAuthConfigured ? (
+                  <Link
+                    href="/sign-in"
+                    onClick={() => setIsOpen(false)}
+                    className="rounded-full bg-[#1d140d] px-3 py-2 text-left text-sm text-white"
+                  >
+                    Continue with email
+                  </Link>
+                ) : null}
                 {isGoogleAuthConfigured ? (
                   <button
                     type="button"

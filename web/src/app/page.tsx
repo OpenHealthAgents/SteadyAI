@@ -100,6 +100,7 @@ export default function HomePage() {
     isAuthenticated,
     isGoogleAuthConfigured,
     isAppleAuthConfigured,
+    isPasswordAuthConfigured,
     isSigningInWithGoogle,
     isSigningInWithApple,
     signInWithGoogle,
@@ -521,6 +522,14 @@ export default function HomePage() {
                   Onboarding is required before Steady AI can store workouts, nutrition, reports, or health summaries.
                 </p>
                 <div className="mt-4 flex flex-wrap gap-3">
+                  {isPasswordAuthConfigured ? (
+                    <Link
+                      href="/sign-in?next=%2Fonboarding"
+                      className="inline-flex rounded-full bg-[#1d140d] px-5 py-3 text-sm font-medium text-white"
+                    >
+                      Continue with email and password
+                    </Link>
+                  ) : null}
                   {isGoogleAuthConfigured ? (
                     <button
                       type="button"
@@ -528,7 +537,7 @@ export default function HomePage() {
                         void signInWithGoogle({ redirectTo: '/onboarding' });
                       }}
                       disabled={isSigningInWithGoogle || isSigningInWithApple}
-                      className="inline-flex rounded-full bg-[#1d140d] px-5 py-3 text-sm font-medium text-white disabled:bg-[#ab9a8c]"
+                      className="inline-flex rounded-full border border-[#1d140d] bg-white px-5 py-3 text-sm font-medium text-[#1d140d] disabled:border-[#cab8a8] disabled:text-[#ab9a8c]"
                     >
                       {isSigningInWithGoogle ? 'Connecting Google...' : 'Continue with Google'}
                     </button>
@@ -549,7 +558,7 @@ export default function HomePage() {
                     href="/onboarding"
                     className="inline-flex rounded-full border border-[#d6b28d] px-5 py-3 text-sm font-medium text-[#7a4b28]"
                   >
-                    {isGoogleAuthConfigured || isAppleAuthConfigured ? 'Or continue onboarding' : 'Start onboarding'}
+                    {isGoogleAuthConfigured || isAppleAuthConfigured || isPasswordAuthConfigured ? 'Or continue onboarding' : 'Start onboarding'}
                   </Link>
                 </div>
               </div>
