@@ -44,7 +44,7 @@ export default function TimePage() {
             onClick={async () => {
               try {
                 await submit();
-                router.replace('/challenges');
+                router.replace('/');
               } catch {
                 // Error state is handled in onboarding context.
               }
