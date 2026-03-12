@@ -96,7 +96,16 @@ for var_name in "${required_vars[@]}"; do
 done
 
 echo "Building and starting SteadyAI services..."
-docker compose --env-file "${ENV_FILE}" up -d --build
+if [[ -n "${GHCR_USERNAME:-}" && -n "${GHCR_TOKEN:-}" ]]; then
+  echo "Logging into GHCR..."
+  printf '%s' "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USERNAME}" --password-stdin
+fi
+
+echo "Pulling prebuilt SteadyAI images..."
+docker compose --env-file "${ENV_FILE}" pull backend web caddy
+
+echo "Starting SteadyAI services..."
+docker compose --env-file "${ENV_FILE}" up -d --no-build
 
 echo "Applying Prisma schema..."
 docker compose --env-file "${ENV_FILE}" exec -T backend npx prisma db push

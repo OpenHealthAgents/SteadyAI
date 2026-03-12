@@ -1,5 +1,6 @@
 services:
   backend:
+    image: ${BACKEND_IMAGE:-ghcr.io/openhealthagents/steadyai-backend:main}
     build:
       context: .
       dockerfile: Dockerfile.backend
@@ -15,6 +16,7 @@ services:
       SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
       SUPABASE_STORAGE_BUCKET: ${SUPABASE_STORAGE_BUCKET:-nutrition-images}
       APPS_MCP_API_KEY: ${APPS_MCP_API_KEY}
+      OPENAI_APPS_CHALLENGE_TOKEN: ${OPENAI_APPS_CHALLENGE_TOKEN}
       NUTRITION_AI_PROVIDER: ${NUTRITION_AI_PROVIDER:-gemini}
       LLM_PROVIDER: ${LLM_PROVIDER:-openai}
       LLM_TIMEOUT_MS: ${LLM_TIMEOUT_MS:-15000}
@@ -27,6 +29,7 @@ services:
     restart: unless-stopped
 
   web:
+    image: ${WEB_IMAGE:-ghcr.io/openhealthagents/steadyai-web:main}
     build:
       context: .
       dockerfile: Dockerfile.web

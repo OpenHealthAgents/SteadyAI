@@ -41,6 +41,8 @@ Edit `.env.production` with production values. Required keys:
 - `ACME_EMAIL` (email for Let's Encrypt registration)
 - `PUBLIC_BASE_URL` (for example `https://api.example.com`)
 - `NEXT_PUBLIC_API_BASE_URL` (for example `https://api.example.com`)
+- `BACKEND_IMAGE` (for example `ghcr.io/openhealthagents/steadyai-backend:main`)
+- `WEB_IMAGE` (for example `ghcr.io/openhealthagents/steadyai-web:main`)
 - `APPS_MCP_API_KEY` (if using apps MCP auth)
 - LLM keys you use (`OPENAI_API_KEY` or others)
 
@@ -48,7 +50,24 @@ Also set the web auth values:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 
-## 3) Build and run
+If your GHCR packages are private, also set:
+- `GHCR_USERNAME`
+- `GHCR_TOKEN`
+
+## 3) Build images in GitHub Actions
+
+This repo includes a workflow that builds and pushes:
+- `ghcr.io/openhealthagents/steadyai-backend:main`
+- `ghcr.io/openhealthagents/steadyai-web:main`
+
+Before using it, add these GitHub repository variables:
+- `NEXT_PUBLIC_API_BASE_URL`
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+
+Push to `main` or run the `Docker Images` workflow manually once to publish the images.
+
+## 4) Pull and run on the droplet
 
 One-command option:
 
@@ -60,22 +79,24 @@ chmod +x deploy/digitalocean-deploy.sh
 Manual option:
 
 ```bash
-docker compose --env-file .env.production up -d --build
+docker login ghcr.io
+docker compose --env-file .env.production pull backend web caddy
+docker compose --env-file .env.production up -d --no-build
 ```
 
-## 4) Sync schema once (recommended with current migration state)
+## 5) Sync schema once (recommended with current migration state)
 
 ```bash
 docker compose --env-file .env.production exec backend npx prisma db push
 ```
 
-## 5) Optional: seed store catalog
+## 6) Optional: seed store catalog
 
 ```bash
 docker compose --env-file .env.production exec backend npm run seed:store
 ```
 
-## 6) Validate
+## 7) Validate
 
 ```bash
 curl -i https://<API_DOMAIN>/api/health
@@ -87,7 +108,7 @@ Open:
 - `https://<APP_DOMAIN>/store`
 - `https://<API_DOMAIN>/.well-known/oauth-authorization-server`
 
-## 7) Supabase auth callbacks
+## 8) Supabase auth callbacks
 
 In Supabase Auth, add these redirect URLs before testing sign-in:
 
@@ -107,7 +128,7 @@ For ChatGPT MCP OAuth, the production connector URL should be:
 
 - `https://<API_DOMAIN>/mcp`
 
-## 8) DNS requirements
+## 9) DNS requirements
 
 Create DNS `A` records pointing to your droplet IP:
 - `<APP_DOMAIN>` -> droplet public IP
