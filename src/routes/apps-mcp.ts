@@ -45,7 +45,7 @@ interface WorkoutExercise {
   name: string;
   durationMin: number;
   reps: string;
-  thumbnailUrl?: string;
+  thumbnailLabel?: string;
   gifUrl?: string;
   videoUrl?: string;
   demoUrl?: string;
@@ -971,6 +971,9 @@ const WORKOUT_WIDGET_HTML = String.raw`<!doctype html>
         font-size: 24px;
         font-weight: 700;
         color: var(--muted);
+        text-align: center;
+        padding: 8px;
+        line-height: 1.2;
       }
       .exercise h4 {
         margin: 0;
@@ -1654,10 +1657,15 @@ const WORKOUT_WIDGET_HTML = String.raw`<!doctype html>
               fallback.loading = "lazy";
               media.replaceWith(fallback);
             }, { once: true });
-          } else if (ex.thumbnailUrl || ex.gifUrl) {
+          } else if (ex.thumbnailLabel) {
+            media = document.createElement("div");
+            media.className = "thumb thumb-fallback";
+            media.setAttribute("aria-label", (ex.name || "Exercise") + " preview");
+            media.textContent = ex.thumbnailLabel;
+          } else if (ex.gifUrl) {
             media = document.createElement("img");
             media.className = "thumb";
-            media.src = ex.thumbnailUrl || ex.gifUrl || "";
+            media.src = ex.gifUrl || "";
             media.alt = (ex.name || "Exercise") + " demo";
             media.loading = "lazy";
           } else {
@@ -2073,25 +2081,6 @@ function randomId(prefix: string): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function buildExerciseThumbnail(label: string): string {
-  const safeLabel = label.replace(/\s+/g, ' ').trim();
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="168" height="168" viewBox="0 0 168 168">
-    <defs>
-      <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
-        <stop offset="0%" stop-color="#f6ede4"/>
-        <stop offset="100%" stop-color="#e8d6c2"/>
-      </linearGradient>
-    </defs>
-    <rect width="168" height="168" rx="18" fill="url(#g)"/>
-    <circle cx="84" cy="46" r="16" fill="#7a4b28"/>
-    <path d="M56 80c12-10 44-10 56 0m-28 0v34m-18 10 18-24 18 24m-40-26-16 12m78-12 16 12" fill="none" stroke="#7a4b28" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-    <foreignObject x="16" y="124" width="136" height="32">
-      <div xmlns="http://www.w3.org/1999/xhtml" style="font:700 14px system-ui,sans-serif;color:#3d2718;text-align:center;">${safeLabel}</div>
-    </foreignObject>
-  </svg>`;
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
-}
-
 function normalizeExerciseName(name: string): string {
   return name.toLowerCase().replace(/^finisher:\s*/i, '').replace(/\s+/g, ' ').trim();
 }
@@ -2139,14 +2128,14 @@ const WORKOUT_EXERCISE_MEDIA_CATALOG: Record<string, { demoUrl: string; thumbnai
   }
 };
 
-function lookupWorkoutExerciseMedia(name: string): Pick<WorkoutExercise, 'thumbnailUrl' | 'demoUrl'> {
+function lookupWorkoutExerciseMedia(name: string): Pick<WorkoutExercise, 'thumbnailLabel' | 'demoUrl'> {
   const match = WORKOUT_EXERCISE_MEDIA_CATALOG[normalizeExerciseName(name)];
   if (!match) {
     return {};
   }
   return {
     demoUrl: match.demoUrl,
-    thumbnailUrl: buildExerciseThumbnail(match.thumbnailLabel)
+    thumbnailLabel: match.thumbnailLabel
   };
 }
 
