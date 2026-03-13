@@ -45,8 +45,10 @@ interface WorkoutExercise {
   name: string;
   durationMin: number;
   reps: string;
+  thumbnailUrl?: string;
   gifUrl?: string;
   videoUrl?: string;
+  demoUrl?: string;
   note: string;
 }
 
@@ -1652,10 +1654,10 @@ const WORKOUT_WIDGET_HTML = String.raw`<!doctype html>
               fallback.loading = "lazy";
               media.replaceWith(fallback);
             }, { once: true });
-          } else if (ex.gifUrl) {
+          } else if (ex.thumbnailUrl || ex.gifUrl) {
             media = document.createElement("img");
             media.className = "thumb";
-            media.src = ex.gifUrl || "";
+            media.src = ex.thumbnailUrl || ex.gifUrl || "";
             media.alt = (ex.name || "Exercise") + " demo";
             media.loading = "lazy";
           } else {
@@ -1672,12 +1674,12 @@ const WORKOUT_WIDGET_HTML = String.raw`<!doctype html>
           details.textContent = (ex.reps || "") + " • " + (ex.durationMin || 0) + " min";
           const note = document.createElement("p");
           note.textContent = ex.note || "";
-          const mediaLink = ex.videoUrl || ex.gifUrl ? document.createElement("a") : null;
+          const mediaLink = ex.demoUrl || ex.videoUrl || ex.gifUrl ? document.createElement("a") : null;
           if (mediaLink) {
-            mediaLink.href = ex.videoUrl || ex.gifUrl || "#";
+            mediaLink.href = ex.demoUrl || ex.videoUrl || ex.gifUrl || "#";
             mediaLink.target = "_blank";
             mediaLink.rel = "noopener noreferrer";
-            mediaLink.textContent = ex.videoUrl ? "Open video" : "Open GIF";
+            mediaLink.textContent = ex.demoUrl ? "Watch demo" : ex.videoUrl ? "Open video" : "Open GIF";
           }
 
           const controls = document.createElement("div");
@@ -2071,6 +2073,83 @@ function randomId(prefix: string): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+function buildExerciseThumbnail(label: string): string {
+  const safeLabel = label.replace(/\s+/g, ' ').trim();
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="168" height="168" viewBox="0 0 168 168">
+    <defs>
+      <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+        <stop offset="0%" stop-color="#f6ede4"/>
+        <stop offset="100%" stop-color="#e8d6c2"/>
+      </linearGradient>
+    </defs>
+    <rect width="168" height="168" rx="18" fill="url(#g)"/>
+    <circle cx="84" cy="46" r="16" fill="#7a4b28"/>
+    <path d="M56 80c12-10 44-10 56 0m-28 0v34m-18 10 18-24 18 24m-40-26-16 12m78-12 16 12" fill="none" stroke="#7a4b28" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <foreignObject x="16" y="124" width="136" height="32">
+      <div xmlns="http://www.w3.org/1999/xhtml" style="font:700 14px system-ui,sans-serif;color:#3d2718;text-align:center;">${safeLabel}</div>
+    </foreignObject>
+  </svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
+function normalizeExerciseName(name: string): string {
+  return name.toLowerCase().replace(/^finisher:\s*/i, '').replace(/\s+/g, ' ').trim();
+}
+
+const WORKOUT_EXERCISE_MEDIA_CATALOG: Record<string, { demoUrl: string; thumbnailLabel: string }> = {
+  'march in place': {
+    demoUrl: 'https://www.youtube.com/results?search_query=march+in+place+exercise+demo',
+    thumbnailLabel: 'March in Place'
+  },
+  'jumping jacks': {
+    demoUrl: 'https://www.youtube.com/results?search_query=jumping+jacks+exercise+demo',
+    thumbnailLabel: 'Jumping Jacks'
+  },
+  'bodyweight box squat': {
+    demoUrl: 'https://www.youtube.com/results?search_query=box+squat+bodyweight+exercise+demo',
+    thumbnailLabel: 'Box Squat'
+  },
+  'bodyweight squat': {
+    demoUrl: 'https://www.youtube.com/results?search_query=bodyweight+squat+exercise+demo',
+    thumbnailLabel: 'Bodyweight Squat'
+  },
+  'push-up + shoulder tap': {
+    demoUrl: 'https://www.youtube.com/results?search_query=push+up+shoulder+tap+exercise+demo',
+    thumbnailLabel: 'Push-Up + Shoulder Tap'
+  },
+  'push-up': {
+    demoUrl: 'https://www.youtube.com/results?search_query=push+up+exercise+demo',
+    thumbnailLabel: 'Push-Up'
+  },
+  'glute bridge': {
+    demoUrl: 'https://www.youtube.com/results?search_query=glute+bridge+exercise+demo',
+    thumbnailLabel: 'Glute Bridge'
+  },
+  'reverse lunge': {
+    demoUrl: 'https://www.youtube.com/results?search_query=reverse+lunge+exercise+demo',
+    thumbnailLabel: 'Reverse Lunge'
+  },
+  'forearm plank': {
+    demoUrl: 'https://www.youtube.com/results?search_query=forearm+plank+exercise+demo',
+    thumbnailLabel: 'Forearm Plank'
+  },
+  'mountain climbers': {
+    demoUrl: 'https://www.youtube.com/results?search_query=mountain+climbers+exercise+demo',
+    thumbnailLabel: 'Mountain Climbers'
+  }
+};
+
+function lookupWorkoutExerciseMedia(name: string): Pick<WorkoutExercise, 'thumbnailUrl' | 'demoUrl'> {
+  const match = WORKOUT_EXERCISE_MEDIA_CATALOG[normalizeExerciseName(name)];
+  if (!match) {
+    return {};
+  }
+  return {
+    demoUrl: match.demoUrl,
+    thumbnailUrl: buildExerciseThumbnail(match.thumbnailLabel)
+  };
+}
+
 type WorkoutAdjustment = 'easier' | 'harder' | 'neutral';
 
 function buildWorkoutPlan(prompt: string, currentPlan?: WorkoutPlan, adjustment: WorkoutAdjustment = 'neutral'): WorkoutPlan {
@@ -2129,7 +2208,10 @@ function buildWorkoutPlan(prompt: string, currentPlan?: WorkoutPlan, adjustment:
     title: "Today's Personalized Workout",
     focus,
     estimatedTotalMin,
-    exercises: base
+    exercises: base.map((exercise) => ({
+      ...lookupWorkoutExerciseMedia(exercise.name),
+      ...exercise
+    }))
   };
 }
 
