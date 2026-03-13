@@ -968,12 +968,14 @@ const WORKOUT_WIDGET_HTML = String.raw`<!doctype html>
       .thumb-fallback {
         display: grid;
         place-items: center;
-        font-size: 24px;
+        font-size: 14px;
         font-weight: 700;
         color: var(--muted);
         text-align: center;
         padding: 8px;
         line-height: 1.2;
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
       .exercise h4 {
         margin: 0;
@@ -2087,43 +2089,43 @@ function normalizeExerciseName(name: string): string {
 
 const WORKOUT_EXERCISE_MEDIA_CATALOG: Record<string, { demoUrl: string; thumbnailLabel: string }> = {
   'march in place': {
-    demoUrl: 'https://www.youtube.com/results?search_query=march+in+place+exercise+demo',
+    demoUrl: 'https://www.youtube.com/results?search_query=march+in+place+exercise',
     thumbnailLabel: 'March in Place'
   },
   'jumping jacks': {
-    demoUrl: 'https://www.youtube.com/results?search_query=jumping+jacks+exercise+demo',
+    demoUrl: 'https://www.youtube.com/results?search_query=jumping+jacks+exercise',
     thumbnailLabel: 'Jumping Jacks'
   },
   'bodyweight box squat': {
-    demoUrl: 'https://www.youtube.com/results?search_query=box+squat+bodyweight+exercise+demo',
+    demoUrl: 'https://www.youtube.com/results?search_query=box+squat+bodyweight+exercise',
     thumbnailLabel: 'Box Squat'
   },
   'bodyweight squat': {
-    demoUrl: 'https://www.youtube.com/results?search_query=bodyweight+squat+exercise+demo',
+    demoUrl: 'https://www.youtube.com/results?search_query=bodyweight+squat+exercise',
     thumbnailLabel: 'Bodyweight Squat'
   },
   'push-up + shoulder tap': {
-    demoUrl: 'https://www.youtube.com/results?search_query=push+up+shoulder+tap+exercise+demo',
+    demoUrl: 'https://www.youtube.com/results?search_query=push+up+shoulder+tap+exercise',
     thumbnailLabel: 'Push-Up + Shoulder Tap'
   },
   'push-up': {
-    demoUrl: 'https://www.youtube.com/results?search_query=push+up+exercise+demo',
+    demoUrl: 'https://www.youtube.com/results?search_query=push+up+exercise',
     thumbnailLabel: 'Push-Up'
   },
   'glute bridge': {
-    demoUrl: 'https://www.youtube.com/results?search_query=glute+bridge+exercise+demo',
+    demoUrl: 'https://www.youtube.com/results?search_query=glute+bridge+exercise',
     thumbnailLabel: 'Glute Bridge'
   },
   'reverse lunge': {
-    demoUrl: 'https://www.youtube.com/results?search_query=reverse+lunge+exercise+demo',
+    demoUrl: 'https://www.youtube.com/results?search_query=reverse+lunge+exercise',
     thumbnailLabel: 'Reverse Lunge'
   },
   'forearm plank': {
-    demoUrl: 'https://www.youtube.com/results?search_query=forearm+plank+exercise+demo',
+    demoUrl: 'https://www.youtube.com/results?search_query=forearm+plank+exercise',
     thumbnailLabel: 'Forearm Plank'
   },
   'mountain climbers': {
-    demoUrl: 'https://www.youtube.com/results?search_query=mountain+climbers+exercise+demo',
+    demoUrl: 'https://www.youtube.com/results?search_query=mountain+climbers+exercise',
     thumbnailLabel: 'Mountain Climbers'
   }
 };
