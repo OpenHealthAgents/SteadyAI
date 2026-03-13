@@ -301,7 +301,7 @@ const TOOLS: ToolDescriptor[] = [
     name: 'steadyai.workout_coach',
     title: 'Personalized Workout Coach',
     description:
-      "Generate today's personalized workout with exercise GIFs. Use this when users ask to create or modify today's routine.",
+      "Generate and render today's personalized workout plan. Use this whenever a user asks for a workout, wants today's routine, asks to modify an exercise plan, or wants the SteadyAI workout card with exercise demo links.",
     inputSchema: {
       type: 'object',
       additionalProperties: false,
@@ -3137,7 +3137,7 @@ async function handleToolCall(
     const plan = applyWorkoutPreferences(basePlan, preferences);
 
     return {
-      text: `Workout ready: ${plan.exercises.length} exercises, about ${plan.estimatedTotalMin} minutes.`,
+      text: `Workout ready: ${plan.exercises.length} exercises, about ${plan.estimatedTotalMin} minutes, with demo links in the workout card.`,
       data: {
         plan,
         promptUsed: prompt,
@@ -3408,7 +3408,7 @@ export async function appsMcpRoutes(fastify: FastifyInstance): Promise<void> {
     return reply.status(200).send({
       name: 'SteadyAI',
       description:
-        'SteadyAI coaching tools. For habit reset/meal/community guidance use steadyai.ask_agent; for personalized workouts with exercise GIFs use steadyai.workout_coach.',
+        'SteadyAI coaching tools. For habit reset, meal, and community guidance use steadyai.ask_agent. For creating or modifying workout plans and showing the workout card with demo links, use steadyai.workout_coach.',
       mcpServer: {
         transport: 'http',
         url: getPublicMcpUrl()
@@ -3806,7 +3806,7 @@ export async function appsMcpRoutes(fastify: FastifyInstance): Promise<void> {
                     : uri === NUTRITION_WIDGET_TEMPLATE_URI
                       ? 'Interactive nutrition coaching card with macro totals, quick adjustment actions, and meal logging.'
                     : uri === WORKOUT_WIDGET_TEMPLATE_URI
-                      ? "Personalized workout card showing today's exercises with GIF links and quick modify actions."
+                      ? "Personalized workout card showing today's exercises, demo links, and quick modify actions."
                     : uri === EDUCATOR_WIDGET_TEMPLATE_URI
                       ? 'Interactive educator card with citations and clarification action.'
                       : 'Interactive SteadyAI coaching card with quick follow-up actions and fullscreen expansion.',
