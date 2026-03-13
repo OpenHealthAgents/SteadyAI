@@ -46,6 +46,7 @@ interface WorkoutExercise {
   durationMin: number;
   reps: string;
   gifUrl: string;
+  videoUrl?: string;
   note: string;
 }
 
@@ -950,6 +951,7 @@ const WORKOUT_WIDGET_HTML = String.raw`<!doctype html>
       .thumb {
         width: 84px;
         height: 84px;
+        display: block;
         object-fit: cover;
         border-radius: 8px;
         border: 1px solid var(--border);
@@ -1617,11 +1619,30 @@ const WORKOUT_WIDGET_HTML = String.raw`<!doctype html>
           const active = index === session.activeIndex && session.mode !== "complete";
           card.className = "exercise" + (doneState ? " done" : "") + (active ? " active" : "");
 
-          const img = document.createElement("img");
-          img.className = "thumb";
-          img.src = ex.gifUrl || "";
-          img.alt = (ex.name || "Exercise") + " demo";
-          img.loading = "lazy";
+          const media = ex.videoUrl ? document.createElement("video") : document.createElement("img");
+          media.className = "thumb";
+          if (media instanceof HTMLVideoElement) {
+            media.src = ex.videoUrl || "";
+            media.poster = ex.gifUrl || "";
+            media.muted = true;
+            media.loop = true;
+            media.autoplay = true;
+            media.playsInline = true;
+            media.preload = "metadata";
+            media.setAttribute("aria-label", (ex.name || "Exercise") + " demo video");
+            media.addEventListener("error", () => {
+              const fallback = document.createElement("img");
+              fallback.className = "thumb";
+              fallback.src = ex.gifUrl || "";
+              fallback.alt = (ex.name || "Exercise") + " demo";
+              fallback.loading = "lazy";
+              media.replaceWith(fallback);
+            }, { once: true });
+          } else {
+            media.src = ex.gifUrl || "";
+            media.alt = (ex.name || "Exercise") + " demo";
+            media.loading = "lazy";
+          }
 
           const content = document.createElement("div");
           const name = document.createElement("h4");
@@ -1630,11 +1651,11 @@ const WORKOUT_WIDGET_HTML = String.raw`<!doctype html>
           details.textContent = (ex.reps || "") + " • " + (ex.durationMin || 0) + " min";
           const note = document.createElement("p");
           note.textContent = ex.note || "";
-          const gif = document.createElement("a");
-          gif.href = ex.gifUrl || "#";
-          gif.target = "_blank";
-          gif.rel = "noopener noreferrer";
-          gif.textContent = "Open GIF";
+          const mediaLink = document.createElement("a");
+          mediaLink.href = ex.videoUrl || ex.gifUrl || "#";
+          mediaLink.target = "_blank";
+          mediaLink.rel = "noopener noreferrer";
+          mediaLink.textContent = ex.videoUrl ? "Open video" : "Open GIF";
 
           const controls = document.createElement("div");
           controls.className = "exercise-controls";
@@ -1664,9 +1685,9 @@ const WORKOUT_WIDGET_HTML = String.raw`<!doctype html>
           content.appendChild(name);
           content.appendChild(details);
           content.appendChild(note);
-          content.appendChild(gif);
+          content.appendChild(mediaLink);
           content.appendChild(controls);
-          card.appendChild(img);
+          card.appendChild(media);
           card.appendChild(content);
           listEl.appendChild(card);
         });
@@ -2025,6 +2046,10 @@ function randomId(prefix: string): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+function toGiphyVideoUrl(gifUrl: string): string {
+  return gifUrl.replace(/\/giphy\.gif$/i, '/giphy.mp4');
+}
+
 type WorkoutAdjustment = 'easier' | 'harder' | 'neutral';
 
 function buildWorkoutPlan(prompt: string, currentPlan?: WorkoutPlan, adjustment: WorkoutAdjustment = 'neutral'): WorkoutPlan {
@@ -2081,6 +2106,7 @@ function buildWorkoutPlan(prompt: string, currentPlan?: WorkoutPlan, adjustment:
       durationMin: 3,
       reps: '3 rounds x 30 sec',
       gifUrl: 'https://media.giphy.com/media/3o6ZsVx5YQfFQ8kBHy/giphy.gif',
+      videoUrl: toGiphyVideoUrl('https://media.giphy.com/media/3o6ZsVx5YQfFQ8kBHy/giphy.gif'),
       note: 'Optional finisher for extra conditioning.'
     });
   }
@@ -2093,7 +2119,10 @@ function buildWorkoutPlan(prompt: string, currentPlan?: WorkoutPlan, adjustment:
     title: "Today's Personalized Workout",
     focus,
     estimatedTotalMin,
-    exercises: base
+    exercises: base.map((exercise) => ({
+      ...exercise,
+      videoUrl: exercise.videoUrl ?? toGiphyVideoUrl(exercise.gifUrl)
+    }))
   };
 }
 
