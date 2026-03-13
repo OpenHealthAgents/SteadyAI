@@ -107,6 +107,12 @@ interface OAuthCallbackQuerystring {
   error_description?: string;
 }
 
+interface OAuthPasswordLoginBody {
+  email?: string;
+  password?: string;
+  return_to?: string;
+}
+
 interface OAuthTokenBody {
   grant_type?: string;
   code?: string;
@@ -2451,6 +2457,37 @@ async function exchangeSupabasePkceCode(authCode: string, codeVerifier: string):
   };
 }
 
+async function signInSupabaseWithPassword(email: string, password: string): Promise<{
+  access_token: string;
+  refresh_token?: string;
+  expires_in?: number;
+  user?: { id?: string; email?: string };
+}> {
+  const response = await fetch(`${getSupabaseAuthBaseUrl()}/token?grant_type=password`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: env.SUPABASE_PUBLISHABLE_KEY
+    },
+    body: JSON.stringify({
+      email,
+      password
+    })
+  });
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as { msg?: string; error_description?: string } | null;
+    throw new Error(body?.msg || body?.error_description || 'Invalid email or password');
+  }
+
+  return (await response.json()) as {
+    access_token: string;
+    refresh_token?: string;
+    expires_in?: number;
+    user?: { id?: string; email?: string };
+  };
+}
+
 async function refreshSupabaseAccessToken(refreshToken: string): Promise<{
   access_token: string;
   refresh_token?: string;
@@ -2706,6 +2743,11 @@ function renderOAuthLoginPage(input: { authorizeUrl: string; error?: string | nu
       h1 { margin: 12px 0 8px; font-size: 32px; }
       p { line-height: 1.7; color: #5f5145; }
       .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+      .password-form { margin-top: 24px; display: grid; gap: 12px; }
+      .password-form label { display: grid; gap: 6px; font-weight: 600; color: #1d140d; }
+      .password-form input { border: 1px solid #d7c2b1; border-radius: 14px; padding: 12px 14px; font: inherit; background: white; }
+      .password-form button { border: 0; border-radius: 999px; padding: 14px 20px; font-weight: 600; background: #7a4b28; color: white; cursor: pointer; }
+      .password-help { margin-top: 8px; font-size: 13px; color: #7a6b5d; }
       a { text-decoration: none; border-radius: 999px; padding: 14px 20px; font-weight: 600; }
       .primary { background: #1d140d; color: white; }
       .secondary { border: 1px solid #1d140d; color: #1d140d; background: white; }
@@ -2717,12 +2759,54 @@ function renderOAuthLoginPage(input: { authorizeUrl: string; error?: string | nu
       <div class="eyebrow">Steady AI for ChatGPT</div>
       <h1>Sign in to connect your coaching account</h1>
       <p>Choose a provider to connect Steady AI with ChatGPT. This lets ChatGPT access your workouts, nutrition logs, reports, and community context as you.</p>
-      ${input.error ? `<p class="error">${input.error}</p>` : ''}
+      <p id="error" class="error"${input.error ? '' : ' hidden'}>${input.error ?? ''}</p>
       <div class="actions">
         <a class="primary" href="${googleUrl}">Continue with Google</a>
         <a class="secondary" href="${appleUrl}">Continue with Apple</a>
       </div>
+      <form id="password-form" class="password-form">
+        <label>
+          Email
+          <input id="email" type="email" autocomplete="email" required />
+        </label>
+        <label>
+          Password
+          <input id="password" type="password" autocomplete="current-password" required />
+        </label>
+        <button type="submit">Continue with Email</button>
+      </form>
+      <p class="password-help">Use a pre-provisioned Steady AI email/password account to connect without social sign-in.</p>
     </main>
+    <script>
+      const form = document.getElementById("password-form");
+      const errorEl = document.getElementById("error");
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+        const response = await fetch("/oauth/login/password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email,
+            password,
+            return_to: ${JSON.stringify(input.authorizeUrl)}
+          })
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          errorEl.hidden = false;
+          errorEl.textContent = result.error || "Email sign-in failed";
+          return;
+        }
+        if (!result.redirect_to) {
+          errorEl.hidden = false;
+          errorEl.textContent = "Missing redirect after email sign-in";
+          return;
+        }
+        window.location.href = result.redirect_to;
+      });
+    </script>
   </body>
 </html>`;
 }
@@ -3407,6 +3491,47 @@ export async function appsMcpRoutes(fastify: FastifyInstance): Promise<void> {
     return reply.redirect(supabaseUrl.toString());
   };
 
+  const oauthPasswordLoginHandler = async (
+    request: FastifyRequest<{ Body: OAuthPasswordLoginBody }>,
+    reply: FastifyReply
+  ) => {
+    if (!hasSupabaseOAuthSupport()) {
+      return reply.status(503).send({ error: 'Supabase OAuth is not configured for MCP.' });
+    }
+
+    const email = typeof request.body?.email === 'string' ? request.body.email.trim() : '';
+    const password = typeof request.body?.password === 'string' ? request.body.password : '';
+    const returnTo = typeof request.body?.return_to === 'string' ? request.body.return_to : '';
+
+    if (!email || !password) {
+      return reply.status(400).send({ error: 'email and password are required' });
+    }
+    if (!returnTo) {
+      return reply.status(400).send({ error: 'return_to is required' });
+    }
+    if (!returnTo.startsWith(getOAuthAuthorizeUrl())) {
+      return reply.status(400).send({ error: 'return_to must point to the Steady AI authorize endpoint' });
+    }
+
+    try {
+      const sessionResponse = await signInSupabaseWithPassword(email, password);
+      const fallbackUser = await resolveUserFromSupabaseAccessToken(sessionResponse.access_token);
+      const session = createMcpOAuthSession({
+        accessToken: sessionResponse.access_token,
+        refreshToken: sessionResponse.refresh_token ?? null,
+        userId: sessionResponse.user?.id || fallbackUser.id,
+        userEmail: sessionResponse.user?.email || fallbackUser.email || null,
+        expiresInSeconds: sessionResponse.expires_in
+      });
+      setMcpSessionCookie(reply, session.id);
+      return reply.status(200).send({ redirect_to: returnTo });
+    } catch (error) {
+      return reply.status(400).send({
+        error: error instanceof Error ? error.message : 'Failed to sign in with email and password.'
+      });
+    }
+  };
+
   const oauthCallbackHandler = async (
     request: FastifyRequest<{ Querystring: OAuthCallbackQuerystring }>,
     reply: FastifyReply
@@ -3652,6 +3777,7 @@ export async function appsMcpRoutes(fastify: FastifyInstance): Promise<void> {
   fastify.get('/apps/manifest', manifestHandler);
   fastify.get<{ Querystring: OAuthAuthorizeQuerystring }>('/oauth/authorize', oauthAuthorizeHandler);
   fastify.get<{ Querystring: OAuthStartQuerystring }>('/oauth/login', oauthLoginHandler);
+  fastify.post<{ Body: OAuthPasswordLoginBody }>('/oauth/login/password', oauthPasswordLoginHandler);
   fastify.get<{ Querystring: OAuthCallbackQuerystring }>('/oauth/callback', oauthCallbackHandler);
   fastify.post<{ Body: OAuthTokenBody }>('/oauth/token', oauthTokenHandler);
   fastify.get('/.well-known/oauth-protected-resource', oauthProtectedResourceHandler);
