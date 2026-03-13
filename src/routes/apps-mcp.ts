@@ -45,7 +45,7 @@ interface WorkoutExercise {
   name: string;
   durationMin: number;
   reps: string;
-  gifUrl: string;
+  gifUrl?: string;
   videoUrl?: string;
   note: string;
 }
@@ -957,6 +957,13 @@ const WORKOUT_WIDGET_HTML = String.raw`<!doctype html>
         border: 1px solid var(--border);
         background: color-mix(in oklab, canvas 92%, canvasText 8%);
       }
+      .thumb-fallback {
+        display: grid;
+        place-items: center;
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--muted);
+      }
       .exercise h4 {
         margin: 0;
         font-size: 13px;
@@ -1619,9 +1626,10 @@ const WORKOUT_WIDGET_HTML = String.raw`<!doctype html>
           const active = index === session.activeIndex && session.mode !== "complete";
           card.className = "exercise" + (doneState ? " done" : "") + (active ? " active" : "");
 
-          const media = ex.videoUrl ? document.createElement("video") : document.createElement("img");
-          media.className = "thumb";
-          if (media instanceof HTMLVideoElement) {
+          let media;
+          if (ex.videoUrl) {
+            media = document.createElement("video");
+            media.className = "thumb";
             media.src = ex.videoUrl || "";
             media.poster = ex.gifUrl || "";
             media.muted = true;
@@ -1638,10 +1646,17 @@ const WORKOUT_WIDGET_HTML = String.raw`<!doctype html>
               fallback.loading = "lazy";
               media.replaceWith(fallback);
             }, { once: true });
-          } else {
+          } else if (ex.gifUrl) {
+            media = document.createElement("img");
+            media.className = "thumb";
             media.src = ex.gifUrl || "";
             media.alt = (ex.name || "Exercise") + " demo";
             media.loading = "lazy";
+          } else {
+            media = document.createElement("div");
+            media.className = "thumb thumb-fallback";
+            media.setAttribute("aria-label", (ex.name || "Exercise") + " demo unavailable");
+            media.textContent = (ex.name || "Exercise").trim().charAt(0).toUpperCase() || "E";
           }
 
           const content = document.createElement("div");
@@ -1651,11 +1666,13 @@ const WORKOUT_WIDGET_HTML = String.raw`<!doctype html>
           details.textContent = (ex.reps || "") + " • " + (ex.durationMin || 0) + " min";
           const note = document.createElement("p");
           note.textContent = ex.note || "";
-          const mediaLink = document.createElement("a");
-          mediaLink.href = ex.videoUrl || ex.gifUrl || "#";
-          mediaLink.target = "_blank";
-          mediaLink.rel = "noopener noreferrer";
-          mediaLink.textContent = ex.videoUrl ? "Open video" : "Open GIF";
+          const mediaLink = ex.videoUrl || ex.gifUrl ? document.createElement("a") : null;
+          if (mediaLink) {
+            mediaLink.href = ex.videoUrl || ex.gifUrl || "#";
+            mediaLink.target = "_blank";
+            mediaLink.rel = "noopener noreferrer";
+            mediaLink.textContent = ex.videoUrl ? "Open video" : "Open GIF";
+          }
 
           const controls = document.createElement("div");
           controls.className = "exercise-controls";
@@ -1685,7 +1702,9 @@ const WORKOUT_WIDGET_HTML = String.raw`<!doctype html>
           content.appendChild(name);
           content.appendChild(details);
           content.appendChild(note);
-          content.appendChild(mediaLink);
+          if (mediaLink) {
+            content.appendChild(mediaLink);
+          }
           content.appendChild(controls);
           card.appendChild(media);
           card.appendChild(content);
@@ -2046,10 +2065,6 @@ function randomId(prefix: string): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function toGiphyVideoUrl(gifUrl: string): string {
-  return gifUrl.replace(/\/giphy\.gif$/i, '/giphy.mp4');
-}
-
 type WorkoutAdjustment = 'easier' | 'harder' | 'neutral';
 
 function buildWorkoutPlan(prompt: string, currentPlan?: WorkoutPlan, adjustment: WorkoutAdjustment = 'neutral'): WorkoutPlan {
@@ -2063,39 +2078,30 @@ function buildWorkoutPlan(prompt: string, currentPlan?: WorkoutPlan, adjustment:
       name: kneeFriendly ? 'March in Place' : 'Jumping Jacks',
       durationMin: easier ? 3 : 4,
       reps: easier ? 'steady pace' : '60 reps',
-      gifUrl: kneeFriendly
-        ? 'https://media.giphy.com/media/l0MYDGA3Du1hBR4xG/giphy.gif'
-        : 'https://media.giphy.com/media/3o7TKtnuHOHHUjR38Y/giphy.gif',
       note: 'Warm-up to raise heart rate and prep joints.'
     },
     {
       name: kneeFriendly ? 'Bodyweight Box Squat' : 'Bodyweight Squat',
       durationMin: 4,
       reps: harder ? '4 x 15' : easier ? '3 x 10' : '3 x 12',
-      gifUrl: 'https://media.giphy.com/media/3o7btPCcdNniyf0ArS/giphy.gif',
       note: 'Keep chest upright and push through heels.'
     },
     {
       name: harder ? 'Push-Up + Shoulder Tap' : 'Push-Up',
       durationMin: 4,
       reps: harder ? '4 x 10' : easier ? '3 x 6' : '3 x 8',
-      gifUrl: 'https://media.giphy.com/media/xT0Gqz4x4eLd5gDtaU/giphy.gif',
       note: 'Use incline push-ups if needed.'
     },
     {
       name: kneeFriendly ? 'Glute Bridge' : 'Reverse Lunge',
       durationMin: 4,
       reps: harder ? '3 x 14/side' : easier ? '3 x 8/side' : '3 x 10/side',
-      gifUrl: kneeFriendly
-        ? 'https://media.giphy.com/media/3o6Zt481isNVuQI1l6/giphy.gif'
-        : 'https://media.giphy.com/media/l0HlNQ03J5JxX6lva/giphy.gif',
       note: kneeFriendly ? 'Drive through heels and squeeze glutes.' : 'Keep front knee stable over mid-foot.'
     },
     {
       name: 'Forearm Plank',
       durationMin: easier ? 3 : 4,
       reps: harder ? '4 x 45 sec' : easier ? '3 x 20 sec' : '3 x 30 sec',
-      gifUrl: 'https://media.giphy.com/media/26FPJGjhefSJuaRhu/giphy.gif',
       note: 'Brace core and keep hips level.'
     }
   ];
@@ -2105,8 +2111,6 @@ function buildWorkoutPlan(prompt: string, currentPlan?: WorkoutPlan, adjustment:
       name: 'Finisher: Mountain Climbers',
       durationMin: 3,
       reps: '3 rounds x 30 sec',
-      gifUrl: 'https://media.giphy.com/media/3o6ZsVx5YQfFQ8kBHy/giphy.gif',
-      videoUrl: toGiphyVideoUrl('https://media.giphy.com/media/3o6ZsVx5YQfFQ8kBHy/giphy.gif'),
       note: 'Optional finisher for extra conditioning.'
     });
   }
@@ -2119,10 +2123,7 @@ function buildWorkoutPlan(prompt: string, currentPlan?: WorkoutPlan, adjustment:
     title: "Today's Personalized Workout",
     focus,
     estimatedTotalMin,
-    exercises: base.map((exercise) => ({
-      ...exercise,
-      videoUrl: exercise.videoUrl ?? toGiphyVideoUrl(exercise.gifUrl)
-    }))
+    exercises: base
   };
 }
 
