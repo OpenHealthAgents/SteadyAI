@@ -1643,31 +1643,23 @@ const WORKOUT_WIDGET_HTML = String.raw`<!doctype html>
           card.className = "exercise" + (doneState ? " done" : "") + (active ? " active" : "");
 
           let media;
-          if (ex.videoUrl) {
+          if (ex.gifUrl) {
+            media = document.createElement("img");
+            media.className = "thumb";
+            media.src = ex.gifUrl || "";
+            media.alt = (ex.name || "Exercise") + " demo";
+            media.loading = "lazy";
+          } else if (ex.videoUrl) {
             media = document.createElement("video");
             media.className = "thumb";
             media.src = ex.videoUrl || "";
-            media.poster = ex.gifUrl || "";
+            media.poster = "";
             media.muted = true;
             media.loop = true;
             media.autoplay = true;
             media.playsInline = true;
             media.preload = "metadata";
             media.setAttribute("aria-label", (ex.name || "Exercise") + " demo video");
-            media.addEventListener("error", () => {
-              const fallback = document.createElement("img");
-              fallback.className = "thumb";
-              fallback.src = ex.gifUrl || "";
-              fallback.alt = (ex.name || "Exercise") + " demo";
-              fallback.loading = "lazy";
-              media.replaceWith(fallback);
-            }, { once: true });
-          } else if (ex.gifUrl) {
-            media = document.createElement("img");
-            media.className = "thumb";
-            media.src = ex.gifUrl || "";
-            media.alt = (ex.name || "Exercise") + " demo";
-            media.loading = "lazy";
           } else if (ex.thumbnailLabel) {
             media = document.createElement("div");
             media.className = "thumb thumb-fallback";
