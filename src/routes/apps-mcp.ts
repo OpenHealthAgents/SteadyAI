@@ -947,7 +947,7 @@ const WORKOUT_WIDGET_HTML = String.raw`<!doctype html>
         border-radius: 10px;
         padding: 8px;
         display: grid;
-        grid-template-columns: 84px 1fr;
+        grid-template-columns: 84px minmax(0, 1fr);
         gap: 8px;
       }
       .exercise.done {
@@ -968,12 +968,14 @@ const WORKOUT_WIDGET_HTML = String.raw`<!doctype html>
       .thumb-fallback {
         display: grid;
         place-items: center;
-        font-size: 14px;
+        font-size: 12px;
         font-weight: 700;
         color: var(--muted);
         text-align: center;
         padding: 8px;
         line-height: 1.2;
+        box-sizing: border-box;
+        overflow: hidden;
         overflow-wrap: anywhere;
         word-break: break-word;
       }
