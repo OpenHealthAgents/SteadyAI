@@ -1662,17 +1662,17 @@ const WORKOUT_WIDGET_HTML = String.raw`<!doctype html>
               fallback.loading = "lazy";
               media.replaceWith(fallback);
             }, { once: true });
-          } else if (ex.thumbnailLabel) {
-            media = document.createElement("div");
-            media.className = "thumb thumb-fallback";
-            media.setAttribute("aria-label", (ex.name || "Exercise") + " preview");
-            media.textContent = ex.thumbnailLabel;
           } else if (ex.gifUrl) {
             media = document.createElement("img");
             media.className = "thumb";
             media.src = ex.gifUrl || "";
             media.alt = (ex.name || "Exercise") + " demo";
             media.loading = "lazy";
+          } else if (ex.thumbnailLabel) {
+            media = document.createElement("div");
+            media.className = "thumb thumb-fallback";
+            media.setAttribute("aria-label", (ex.name || "Exercise") + " preview");
+            media.textContent = ex.thumbnailLabel;
           } else {
             media = document.createElement("div");
             media.className = "thumb thumb-fallback";
