@@ -8,6 +8,7 @@ import type { BuildMcpUserSummaryInput } from '../mcp/userSummary';
 import { createCommunityPost } from '../services/community-post.service';
 import { generateAgentChatReply, type AgentChatType } from '../services/agent-chat.service';
 import { generateEducatorLesson, generateMythCorrection } from '../services/educator.service';
+import { attachExerciseMedia } from '../services/exercise-media.service';
 import { generateMcpUserSummary } from '../services/mcp-user-summary.service';
 import { estimateNutrition } from '../services/nutrition-ai.service';
 import { ingestNutrition } from '../services/nutrition.service';
@@ -2085,64 +2086,6 @@ function randomId(prefix: string): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function normalizeExerciseName(name: string): string {
-  return name.toLowerCase().replace(/^finisher:\s*/i, '').replace(/\s+/g, ' ').trim();
-}
-
-const WORKOUT_EXERCISE_MEDIA_CATALOG: Record<string, { demoUrl: string; thumbnailLabel: string }> = {
-  'march in place': {
-    demoUrl: 'https://www.youtube.com/results?search_query=march+in+place+exercise',
-    thumbnailLabel: 'March in Place'
-  },
-  'jumping jacks': {
-    demoUrl: 'https://www.youtube.com/results?search_query=jumping+jacks+exercise',
-    thumbnailLabel: 'Jumping Jacks'
-  },
-  'bodyweight box squat': {
-    demoUrl: 'https://www.youtube.com/results?search_query=box+squat+bodyweight+exercise',
-    thumbnailLabel: 'Box Squat'
-  },
-  'bodyweight squat': {
-    demoUrl: 'https://www.youtube.com/results?search_query=bodyweight+squat+exercise',
-    thumbnailLabel: 'Bodyweight Squat'
-  },
-  'push-up + shoulder tap': {
-    demoUrl: 'https://www.youtube.com/results?search_query=push+up+shoulder+tap+exercise',
-    thumbnailLabel: 'Push-Up + Shoulder Tap'
-  },
-  'push-up': {
-    demoUrl: 'https://www.youtube.com/results?search_query=push+up+exercise',
-    thumbnailLabel: 'Push-Up'
-  },
-  'glute bridge': {
-    demoUrl: 'https://www.youtube.com/results?search_query=glute+bridge+exercise',
-    thumbnailLabel: 'Glute Bridge'
-  },
-  'reverse lunge': {
-    demoUrl: 'https://www.youtube.com/results?search_query=reverse+lunge+exercise',
-    thumbnailLabel: 'Reverse Lunge'
-  },
-  'forearm plank': {
-    demoUrl: 'https://www.youtube.com/results?search_query=forearm+plank+exercise',
-    thumbnailLabel: 'Forearm Plank'
-  },
-  'mountain climbers': {
-    demoUrl: 'https://www.youtube.com/results?search_query=mountain+climbers+exercise',
-    thumbnailLabel: 'Mountain Climbers'
-  }
-};
-
-function lookupWorkoutExerciseMedia(name: string): Pick<WorkoutExercise, 'thumbnailLabel' | 'demoUrl'> {
-  const match = WORKOUT_EXERCISE_MEDIA_CATALOG[normalizeExerciseName(name)];
-  if (!match) {
-    return {};
-  }
-  return {
-    demoUrl: match.demoUrl,
-    thumbnailLabel: match.thumbnailLabel
-  };
-}
-
 type WorkoutAdjustment = 'easier' | 'harder' | 'neutral';
 
 function buildWorkoutPlan(prompt: string, currentPlan?: WorkoutPlan, adjustment: WorkoutAdjustment = 'neutral'): WorkoutPlan {
@@ -2201,10 +2144,7 @@ function buildWorkoutPlan(prompt: string, currentPlan?: WorkoutPlan, adjustment:
     title: "Today's Personalized Workout",
     focus,
     estimatedTotalMin,
-    exercises: base.map((exercise) => ({
-      ...lookupWorkoutExerciseMedia(exercise.name),
-      ...exercise
-    }))
+    exercises: base
   };
 }
 
@@ -3138,7 +3078,11 @@ async function handleToolCall(
     const currentPlan =
       args.currentPlan && typeof args.currentPlan === 'object' ? (args.currentPlan as WorkoutPlan) : undefined;
     const basePlan = buildWorkoutPlan(prompt, currentPlan, autoAdjustment);
-    const plan = applyWorkoutPreferences(basePlan, preferences);
+    const preferredPlan = applyWorkoutPreferences(basePlan, preferences);
+    const plan = {
+      ...preferredPlan,
+      exercises: await attachExerciseMedia(preferredPlan.exercises)
+    };
 
     return {
       text: `Workout ready: ${plan.exercises.length} exercises, about ${plan.estimatedTotalMin} minutes, with demo links in the workout card.`,
