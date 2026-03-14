@@ -2,6 +2,8 @@ import multipart from '@fastify/multipart';
 import formbody from '@fastify/formbody';
 import cors from '@fastify/cors';
 import Fastify, { type FastifyInstance } from 'fastify';
+import { createReadStream, existsSync } from 'fs';
+import path from 'path';
 
 import { env } from './config/env';
 import { disconnectPrisma } from './db/prisma';
@@ -56,6 +58,26 @@ export async function buildApp(): Promise<FastifyInstance> {
 
     reply.type('text/plain; charset=utf-8');
     return reply.status(200).send(env.OPENAI_APPS_CHALLENGE_TOKEN.trim());
+  });
+
+  app.get('/media/exercises/:asset', async (request, reply) => {
+    const rawAsset = (request.params as { asset?: string }).asset ?? '';
+    const asset = path.basename(rawAsset);
+    const mediaPath = path.join(process.cwd(), 'exercise-media', asset);
+
+    if (!asset || !existsSync(mediaPath)) {
+      return reply.status(404).send({ error: 'Exercise media not found' });
+    }
+
+    if (asset.endsWith('.gif')) {
+      reply.type('image/gif');
+    } else if (asset.endsWith('.mp4')) {
+      reply.type('video/mp4');
+    } else {
+      reply.type('application/octet-stream');
+    }
+
+    return reply.send(createReadStream(mediaPath));
   });
 
   await app.register(appsMcpRoutes);
